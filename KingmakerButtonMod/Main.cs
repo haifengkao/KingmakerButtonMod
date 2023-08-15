@@ -12,6 +12,10 @@ using Harmony12;
 
 using KingmakerBuffBot;
 using System.Reflection;
+using Kingmaker.PubSubSystem;
+using Kingmaker;
+using ModMaker.Utility;
+using static UnityModManagerNet.UnityModManager.Param;
 
 namespace KingmakerButtonMod
 {
@@ -19,6 +23,7 @@ namespace KingmakerButtonMod
     {
         public static bool Enabled;
 
+        static ContainersUIController ContainersUIController;
         static bool IsBuffBotLoaded() => IsModLoaded("KingmakerBuffBot");
         static bool IsModLoaded(string modId)
         {
@@ -37,6 +42,18 @@ namespace KingmakerButtonMod
         static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
         {
             Enabled = value;
+
+            if (Enabled)
+            {
+                if (ContainersUIController == null) { 
+                     ContainersUIController = new ContainersUIController();
+                 }
+                ContainersUIController.HandleModEnable();
+            }
+            else
+            {
+                ContainersUIController.HandleModDisable();
+            }
             return true;
         }
         static void OnGUI(UnityModManager.ModEntry modEntry)
@@ -62,3 +79,4 @@ namespace KingmakerButtonMod
 
     }
 }
+

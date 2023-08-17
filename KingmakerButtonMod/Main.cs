@@ -21,10 +21,18 @@ namespace KingmakerButtonMod
 {
     static class Main
     {
-        public static bool Enabled;
 
+        public static bool Enabled;
+        public static UnityModManager.ModEntry ModEntry;
+        public static UnityModManager.ModEntry.ModLogger Logger
+        {
+            get
+            {
+                return ModEntry.Logger;
+            }
+        }
         static ContainersUIController ContainersUIController;
-        static bool IsBuffBotLoaded() => IsModLoaded("KingmakerBuffBot");
+        static bool IsBuffBotLoaded => IsModLoaded("KingmakerBuffBot");
         static bool IsModLoaded(string modId)
         {
             var modEntry = UnityModManager.FindMod(modId);
@@ -33,48 +41,82 @@ namespace KingmakerButtonMod
 
         static bool Load(UnityModManager.ModEntry modEntry)
         {
-            modEntry.OnToggle = OnToggle;
-            modEntry.OnGUI = OnGUI;
 
+                modEntry.OnToggle = OnToggle;
+                modEntry.OnGUI = OnGUI;
+                ModEntry = modEntry;
+
+            Main.Logger?.Log("Load2");
             return true;
+          
         }
 
         static bool OnToggle(UnityModManager.ModEntry modEntry, bool value)
         {
-            Enabled = value;
 
-            if (Enabled)
+            try
             {
-                if (ContainersUIController == null) { 
-                     ContainersUIController = new ContainersUIController();
-                 }
-                ContainersUIController.HandleModEnable();
+
+                //Main.Logger?.Log("OnToggle");
+                Enabled = value;
+
+                if (Enabled)
+                {
+
+                    ContainersUIController = new ContainersUIController();
+
+                    ContainersUIController?.HandleModEnable();
+                }
+                else
+                {
+                    ContainersUIController?.HandleModDisable();
+                }
+
+                Main.Logger?.Log("<--OnToggle");
+               
             }
-            else
+            catch (Exception ex)
             {
-                ContainersUIController.HandleModDisable();
+                Main.Logger?.Error($"Exception: {ex.Message}\nStack Trace: {ex.StackTrace}");
             }
             return true;
         }
         static void OnGUI(UnityModManager.ModEntry modEntry)
         {
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
      
-            GUILayout.Label($"BuffBotLoaded {IsBuffBotLoaded()}");
+            GUILayout.Label($"BuffBotLoaded {IsBuffBotLoaded}");
 
-            Type mainType = Assembly.Load("KingmakerBuffBot").GetType("KingmakerBuffBot.Main");
-            if (mainType != null)
+            
+            if (CanBuff)
             {
-                MethodInfo executeMethod = mainType.GetMethod("Execute", BindingFlags.Static | BindingFlags.NonPublic);
-                if (executeMethod != null)
-                {
-                    //executeMethod.Invoke(null, null);
-
-                    GUILayout.Label("Find Execute method");
-                }
+                GUILayout.Label("Buff method is found");
             }
-            GUILayout.EndHorizontal();
+                  
 
+            GUILayout.EndVertical();
+
+        }
+
+        public static void BeginBuff()
+        {
+              if (!CanBuff) { 
+                Main.Logger?.Log("Can't buff");
+                return;
+            }
+
+            KingmakerBuffBot.Main.ExecutionsBoth();
+            KingmakerBuffBot.Main.AttachProfilesManager();
+           
+        }
+
+     
+
+        static bool CanBuff
+        {
+           get {
+                return IsBuffBotLoaded;
+            }
         }
 
     }

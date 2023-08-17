@@ -1,69 +1,193 @@
-﻿using Kingmaker.Blueprints.Items.Equipment;
+﻿
 using Kingmaker.GameModes;
 using Kingmaker.UI.Constructor;
 
 using Kingmaker.UI;
 using Kingmaker;
 
-using System.Reflection;
-
-using static System.Net.Mime.MediaTypeNames;
 
 using TMPro;
 using UnityEngine.Events;
 using UnityEngine;
 
+using UnityEngine.UI;
 
 
 namespace KingmakerButtonMod
 {
+   
     class ContainersUIManager : MonoBehaviour
     {
+        
 
-
-        private ButtonWrapper _button;
-
+        private ButtonWrapper _buttonWrapper;
+        GameObject _button;
         private static GameObject hud;
+        private static GameObject _tooglePanel;
 
         public static ContainersUIManager CreateObject()
         {
+            Main.Logger.Log("CreateObject");
             UICommon uiCommon = Game.Instance.UI.Common;
             hud = uiCommon?.transform.Find("HUDLayout")?.gameObject;
 
+            GameObject tooglePanel = uiCommon?.transform.Find("HUDLayout/CombatLog/TooglePanel/ToogleAll")?.gameObject;
 
-            if (!hud)
+            if (!hud || !tooglePanel)
             {
+
+
+                Main.Logger.Log($"hud not found 2 ");
+
+
+                if (uiCommon?.transform == null)
+                {
+                    Main.Logger.Log("transform is null");
+                }
+                else
+                {
+                    foreach (Transform child in uiCommon.transform)
+                    {
+                        Main.Logger.Log(child.name);
+                    }
+                }
+               
+
                 return null;
             }
 
+            Main.Logger.Log("success");
+            if (uiCommon?.transform == null)
+            {
+                Main.Logger.Log("transform is null");
+            }
+            else
+            {
+                foreach (Transform child in uiCommon.transform)
+                {
+                    Main.Logger.Log(child.name);
+                }
+            }
 
-
+            _tooglePanel = tooglePanel;
             return hud.AddComponent<ContainersUIManager>();
         }
 
         void Awake()
         {
+            Main.Logger.Log("awake");
 
-            // Now add your button to this panel
-            GameObject newButton = new GameObject("MyNewButton");
-            newButton.AddComponent<ButtonPF>();
-            newButton.name = "MyNew";
+            GameObject containers = new GameObject("MyNew", typeof(RectTransform));
+            containers.transform.SetParent(hud.transform);
+            containers.transform.SetSiblingIndex(0);
+            
+            RectTransform containersRect = (RectTransform)containers.transform;
 
-            // Set button properties and listeners...
+            ResetRect(containersRect);
+            // Anchors and pivot at the bottom-left
+            containersRect.anchorMin = new Vector2(0, 0.2f);
+            containersRect.anchorMax = new Vector2(0, 0.2f);
+            containersRect.pivot = new Vector2(0, 0.5f);
 
-            newButton.transform.SetParent(hud.transform);
-            newButton.transform.SetSiblingIndex(0);
+            // Set the size
+            containersRect.sizeDelta = new Vector2(30, 30);
+
+            // Position it at the bottom-left corner of the hud
+            containersRect.anchoredPosition = new Vector2(containersRect.sizeDelta.x * 0.5f + 10, 0);
 
 
-            _button = new ButtonWrapper(newButton, "MyNew2", HandleToggleScrolls);
+            //initialize buttons
+            GameObject toggleScrolls = Instantiate(_tooglePanel, containers.transform, false);
+            toggleScrolls.transform.SetSiblingIndex(0);
+            setToggleButtons(toggleScrolls, "MyButton4");
+            ResetPosition(toggleScrolls);
+            _button = toggleScrolls;
+           
 
+
+            void setToggleButtons(GameObject button, string name)
+            {
+                button.name = name;
+                DestroyImmediate(button.GetComponent<Toggle>());
+                button.AddComponent<ButtonPF>();
+            }
+
+            _buttonWrapper = new ButtonWrapper((RectTransform)toggleScrolls.transform, "B", HandleToggleScrolls);
+
+            Camera uiCamera = Camera.current;
+            
+            Rect screenRect = GetScreenCoordinates(toggleScrolls.GetComponent<RectTransform>(), uiCamera);
+
+            Main.Logger.Log($"Button is displayed from {screenRect.x}, {screenRect.y} with width {screenRect.width} and height {screenRect.height} in screen coordinates.");
+
+
+
+            Rect screenRect4 = GetScreenCoordinates(containers.GetComponent<RectTransform>(), uiCamera);
+            Main.Logger.Log($"containers is displayed from {screenRect4.x}, {screenRect4.y} with width {screenRect4.width} and height {screenRect4.height} in screen coordinates.");
+
+            Rect screenRect2 = GetScreenCoordinates(hud.GetComponent<RectTransform>(), uiCamera);
+            Main.Logger.Log($"hud is displayed from {screenRect2.x}, {screenRect2.y} with width {screenRect2.width} and height {screenRect2.height} in screen coordinates.");
+    
         }
 
+        public static void ResetPosition(GameObject obj)
+        {
+            RectTransform transform = obj.GetComponent<RectTransform>();
+            ResetRect(transform);
+            FillParent(transform);
+
+        }
+        public static void ResetRect(RectTransform rectTransform)
+        {
+            // Reset local position
+            rectTransform.localPosition = Vector3.zero;
+
+            // Reset local scale
+            rectTransform.localScale = Vector3.one;
+
+            // Reset rotation
+            rectTransform.localRotation = Quaternion.identity;
+
+            // Optionally: reset other RectTransform specific properties
+            // depending on your use case:
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.sizeDelta = Vector2.zero;
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        }
+
+        public static void FillParent(RectTransform rectTransform)
+        {
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(1, 1); // This will stretch it to fill the entire parent
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.sizeDelta = Vector2.zero; // Setting this to zero ensures it fills the parent
+            rectTransform.anchoredPosition = Vector2.zero;
+        }
+
+        public static Rect GetScreenCoordinates(RectTransform transform, Camera uiCamera)
+        {
+            Vector2 sizeDelta = transform.rect.size;
+            Vector3[] corners = new Vector3[4];
+
+            // Get the four corners of the RectTransform in world space
+            transform.GetWorldCorners(corners);
+
+            // Convert the world space coordinates of the bottom left corner to screen space
+            Vector2 screenBottomLeft = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[0]);
+
+            // Convert the world space coordinates of the top right corner to screen space
+            Vector2 screenTopRight = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[2]);
+
+            // Create a Rect from the two points and return
+            return new Rect(screenBottomLeft.x, screenBottomLeft.y, screenTopRight.x - screenBottomLeft.x, screenTopRight.y - screenBottomLeft.y);
+        }
 
 
         private void HandleToggleScrolls()
         {
-
+            Main.Logger.Log("toogle");
+            Main.BeginBuff();
         }
 
 
@@ -73,15 +197,22 @@ namespace KingmakerButtonMod
                 Game.Instance.CurrentMode == GameModeType.EscMode ||
                 Game.Instance.CurrentMode == GameModeType.Pause)
             {
-
-                _button._button.SetActive(true);
+                //gameObject.transform.position = SetMenuPosition(500, 500, hud.transform.position);
+                _button.transform.gameObject.SetActive(true);
 
             }
             else
             {
-
-                _button._button.SetActive(false);
+              
+                _button.transform.gameObject.SetActive(false);
             }
+        }
+
+        private static Vector3 SetMenuPosition(float x, float y, Vector3 z)
+        {
+            float ascpectRatio = (float)Screen.width / (float)Screen.height;
+            return Camera.current.ScreenToWorldPoint
+                (new Vector3(Screen.width * x, (Screen.height * y) * (ascpectRatio * 0.5625f), Camera.current.WorldToScreenPoint(z).z));
         }
 
     }
@@ -92,12 +223,12 @@ namespace KingmakerButtonMod
         public bool ButtonToggle { get; set; }
         private readonly Color _enableColor = Color.white;
         private readonly Color _disableColor = new Color(0.7f, 0.8f, 1f);
-        public readonly GameObject _button;
+        public readonly RectTransform _button;
         private readonly ButtonPF _toggle;
         private readonly TextMeshProUGUI _textMesh;
 
 
-        public ButtonWrapper(GameObject button, string text, UnityAction OnToggle)
+        public ButtonWrapper(RectTransform button, string text, UnityAction OnToggle)
         {
 
             this.ButtonToggle = false;

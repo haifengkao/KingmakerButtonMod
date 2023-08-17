@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 using ModMaker;
-using static UnityModManagerNet.UnityModManager.Param;
+
 
 using UnityEngine;
 using Kingmaker.PubSubSystem;
@@ -28,7 +22,7 @@ namespace KingmakerButtonMod
 
         public void Detach()
         {
-            ContainersUI.SafeDestroy();
+            ContainersUI?.SafeDestroy();
             ContainersUI = null;
         }
 
@@ -41,6 +35,7 @@ namespace KingmakerButtonMod
 
         public void HandleModEnable()
         {
+            Main.Logger.Log("HandleModEnable");
 
             Attach();
 
@@ -49,8 +44,8 @@ namespace KingmakerButtonMod
 
         public void HandleModDisable()
         {
-          
 
+            Main.Logger.Log("HandleModDisable");
             EventBus.Unsubscribe(this);
 
             Detach();
@@ -59,11 +54,12 @@ namespace KingmakerButtonMod
 
         public void OnAreaBeginUnloading()
         {
-
+            Main.Logger.Log("OnAreaBeginUnloading");
         }
 
         public void OnAreaDidLoad()
         {
+            Main.Logger.Log("OnAreaDidLoad");
             Attach();
         }
     }

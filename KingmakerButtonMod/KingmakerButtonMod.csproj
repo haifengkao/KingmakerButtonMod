@@ -45,6 +45,7 @@
     </Reference>
     <Reference Include="KingmakerBuffBot">
       <HintPath>E:\SteamLibrary\steamapps\common\Pathfinder Kingmaker\Mods\KingmakerBuffBot\KingmakerBuffBot.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -90,7 +91,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-   <PropertyGroup>
+  <PropertyGroup>
     <PostBuildEvent>start XCOPY /Y /R "$(TargetPath)" "E:\SteamLibrary\steamapps\common\Pathfinder Kingmaker\Mods\KingmakerButtonMod\KingmakerButtonMod.dll"</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

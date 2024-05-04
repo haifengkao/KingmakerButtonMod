@@ -73,28 +73,49 @@ namespace KingmakerButtonMod
             return hud.AddComponent<ContainersUIManager>();
         }
 
+        private static void SetContainerPosition(RectTransform containersRect, GameObject menuButtons)
+        {
+            RectTransform menuButtonsTransform = (RectTransform)menuButtons.transform;
+
+            ResetRect(containersRect);
+
+            // anchor and pivot at the bottom-left
+            containersRect.anchorMin = new Vector2(0, 0);
+            containersRect.anchorMax = new Vector2(0, 0);
+            containersRect.pivot = new Vector2(0, 0);
+
+            // Set the size
+            containersRect.sizeDelta = new Vector2(48, 48);
+
+
+            float desiredPadding = 10f;
+
+            float topY = menuButtonsTransform.anchoredPosition.y + (menuButtonsTransform.sizeDelta.y * (1 - menuButtonsTransform.pivot.y));
+
+            // Position it at the bottom-top corner of the menuButtons
+            containersRect.anchoredPosition = new Vector2(menuButtonsTransform.anchoredPosition.x, topY + desiredPadding);
+
+            Main.Logger.Log($"anchoredPosition.y {menuButtonsTransform.anchoredPosition.y} {topY} {menuButtonsTransform.sizeDelta.y} {menuButtonsTransform.pivot.y}");
+        }
+
         void Awake()
         {
             Main.Logger.Log("awake");
+           
+            GameObject menuButtons = Game.Instance.UI.Common?.transform.Find("HUDLayout/Menu_Buttons48px")?.gameObject;
 
-            GameObject containers = new GameObject("MyNew", typeof(RectTransform));
+            if (!menuButtons)
+            {
+                Main.Logger.Log($"menuButtons not found");
+                return;
+            }
+
+            GameObject containers = new GameObject("MyKingmakerBuffButton", typeof(RectTransform));
             containers.transform.SetParent(hud.transform);
             containers.transform.SetSiblingIndex(0);
+
+            SetContainerPosition((RectTransform)containers.transform, menuButtons);
             
-            RectTransform containersRect = (RectTransform)containers.transform;
-
-            ResetRect(containersRect);
-            // Anchors and pivot at the bottom-left
-            containersRect.anchorMin = new Vector2(0, 0.2f);
-            containersRect.anchorMax = new Vector2(0, 0.2f);
-            containersRect.pivot = new Vector2(0, 0.5f);
-
-            // Set the size
-            containersRect.sizeDelta = new Vector2(30, 30);
-
-            // Position it at the bottom-left corner of the hud
-            containersRect.anchoredPosition = new Vector2(containersRect.sizeDelta.x * 0.5f + 10, 0);
-
 
             //initialize buttons
             GameObject toggleScrolls = Instantiate(_tooglePanel, containers.transform, false);
@@ -103,7 +124,6 @@ namespace KingmakerButtonMod
             ResetPosition(toggleScrolls);
             _button = toggleScrolls;
            
-
 
             void setToggleButtons(GameObject button, string name)
             {
@@ -125,8 +145,7 @@ namespace KingmakerButtonMod
             Rect screenRect4 = GetScreenCoordinates(containers.GetComponent<RectTransform>(), uiCamera);
             Main.Logger.Log($"containers is displayed from {screenRect4.x}, {screenRect4.y} with width {screenRect4.width} and height {screenRect4.height} in screen coordinates.");
 
-            Rect screenRect2 = GetScreenCoordinates(hud.GetComponent<RectTransform>(), uiCamera);
-            Main.Logger.Log($"hud is displayed from {screenRect2.x}, {screenRect2.y} with width {screenRect2.width} and height {screenRect2.height} in screen coordinates.");
+          
     
         }
 
